@@ -1,0 +1,143 @@
+# AI编码规则配置文件
+# 用于AI代码生成的核心规则和约束
+
+## 项目架构
+ARCHITECTURE=MVC
+LAYERS=Routes->Controllers->Services->Models
+API_ENDPOINTS=/api/user,/api/admin,/api/merchant
+
+## 编码规范
+LANGUAGE=JavaScript
+FRAMEWORK=Express.js
+ORM=Sequelize
+ODM=Mongoose
+DATABASE=MySQL,MongoDB
+CACHE=Redis
+
+## 命名约定
+CONTROLLER_SUFFIX=Controller
+SERVICE_SUFFIX=Service
+MODEL_NAMING=camelCase
+CLASS_NAMING=PascalCase
+METHOD_NAMING=camelCase
+CONSTANT_NAMING=UPPER_SNAKE_CASE
+
+## 数据类型规则
+USE_NUMBERS_FOR_STATUS=true
+AVOID_BOOLEAN=true
+AVOID_STRING_ENUMS=true
+STATUS_CONSTANTS_REQUIRED=true
+
+## 状态常量示例
+COMMON_STATUS_DISABLED=0
+COMMON_STATUS_ENABLED=1
+COMMON_STATUS_FAILED=0
+COMMON_STATUS_SUCCESS=1
+COMMON_STATUS_NO=0
+COMMON_STATUS_YES=1
+
+USER_STATUS_INACTIVE=0
+USER_STATUS_ACTIVE=1
+USER_STATUS_SUSPENDED=2
+USER_STATUS_BANNED=3
+USER_STATUS_DELETED=4
+
+## 基类继承要求
+CONTROLLERS_EXTEND=BaseController
+SERVICES_EXTEND=BaseService
+USE_ASYNC_HANDLER=true
+USE_ARROW_FUNCTIONS=true
+
+## 响应格式
+SUCCESS_RESPONSE=this.sendSuccess(res, message, data)
+ERROR_RESPONSE=this.sendError(res, message, statusCode, errors)
+PAGINATED_RESPONSE=this.sendPaginatedResponse(res, data, pagination, message)
+
+## 错误处理
+USE_TRY_CATCH=true
+LOG_ERRORS=true
+LOG_ACTIONS=true
+ERROR_METHOD=this.logError(action, error, req)
+ACTION_METHOD=this.logAction(action, req, details)
+
+## 数据库操作
+USE_TRANSACTIONS=true
+TRANSACTION_METHOD=this.executeTransaction(callback, sequelize)
+CACHE_METHOD=this.getOrSetCache(key, fetchFunction, ttl)
+
+## 中间件规则
+AUTH_MIDDLEWARE_REQUIRED=true
+RATE_LIMITING_REQUIRED=true
+VALIDATION_REQUIRED=true
+
+## 注释要求
+FILE_HEADER_COMMENT=true
+METHOD_COMMENT=true
+INLINE_COMMENT=true
+COMMENT_LANGUAGE=Chinese
+
+## 安全要求
+INPUT_VALIDATION=express-validator
+PASSWORD_HASHING=bcrypt
+JWT_AUTHENTICATION=true
+HELMET_SECURITY=true
+CORS_ENABLED=true
+
+## 缓存策略
+CACHE_TTL_SHORT=300
+CACHE_TTL_MEDIUM=3600
+CACHE_TTL_LONG=86400
+
+## 文件结构
+CONTROLLERS_PATH=app/controllers
+SERVICES_PATH=app/services
+ROUTES_PATH=app/routes
+MODELS_PATH=app/models
+MIDDLEWARE_PATH=middleware
+COMMON_PATH=common
+
+## 路由结构
+USER_API_PREFIX=/api/user
+ADMIN_API_PREFIX=/api/admin
+MERCHANT_API_PREFIX=/api/merchant
+
+## 环境配置
+ENV_FILES=env/dev.env,env/uat.env,env/pro.env
+CONFIG_VALIDATION=true
+HEALTH_CHECK_ENDPOINT=/health
+
+## 日志规则
+LOG_LEVEL_DEV=debug
+LOG_LEVEL_PROD=info
+LOG_FORMAT=structured
+LOG_ROTATION=daily
+
+## 测试要求
+UNIT_TESTS=true
+API_TESTS=true
+TEST_FRAMEWORK=jest
+COVERAGE_REQUIRED=true
+
+## 代码质量
+ESLINT_ENABLED=true
+PRETTIER_ENABLED=true
+HUSKY_HOOKS=true
+COMMIT_LINT=true
+
+## 部署配置
+DOCKER_SUPPORT=true
+CLUSTER_MODE=true
+PM2_SUPPORT=true
+NGINX_PROXY=true
+
+## 性能优化
+COMPRESSION=true
+STATIC_CACHE=true
+CONNECTION_POOLING=true
+QUERY_OPTIMIZATION=true
+
+## 监控要求
+PERFORMANCE_LOGGING=true
+ERROR_TRACKING=true
+HEALTH_MONITORING=true
+METRICS_COLLECTION=true
