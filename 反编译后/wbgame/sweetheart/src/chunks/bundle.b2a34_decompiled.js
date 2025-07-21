@@ -64,17 +64,21 @@ System.register([], function(_export, _context) {
                                 a = o.asyncIterator || "@@asyncIterator",
                                 s = o.toStringTag || "@@toStringTag";
 
+                            // ========== 属性定义函数：安全地定义对象属性 ==========
+                            // 参数：t=目标对象, e=属性名, n=属性值
+                            // 功能：使用Object.defineProperty安全地定义属性，如果失败则降级为直接赋值
                             function c(t, e, n) {
                                 return Object.defineProperty(t, e, {
-                                    value: n,
-                                    enumerable: !0,
-                                    configurable: !0,
-                                    writable: !0
+                                    value: n,           // 属性值
+                                    enumerable: !0,     // 可枚举
+                                    configurable: !0,   // 可配置
+                                    writable: !0        // 可写
                                 }), t[e]
                             }
                             try {
-                                c({}, "")
+                                c({}, "")  // 测试Object.defineProperty是否可用
                             } catch (t) {
+                                // 如果Object.defineProperty失败，使用直接赋值作为降级方案
                                 c = function(t, e, n) {
                                     return t[e] = n
                                 }
@@ -121,27 +125,33 @@ System.register([], function(_export, _context) {
                                 }(t, n, a), r
                             }
 
+                            // ========== Generator执行包装函数：安全执行Generator函数 ==========
+                            // 参数：t=要执行的函数, e=执行上下文, n=参数
+                            // 返回：执行结果对象 {type: "normal"|"throw", arg: 结果值|异常}
                             function l(t, e, n) {
                                 try {
                                     return {
-                                        type: "normal",
-                                        arg: t.call(e, n)
+                                        type: "normal",  // 正常执行
+                                        arg: t.call(e, n)  // 函数执行结果
                                     }
                                 } catch (t) {
                                     return {
-                                        type: "throw",
-                                        arg: t
+                                        type: "throw",  // 异常执行
+                                        arg: t          // 异常对象
                                     }
                                 }
                             }
                             e.wrap = u;
                             var h = {};
 
-                            function m() {}
+                            // ========== Generator基础函数：Generator运行时的基础构造函数 ==========
+                            function m() {}  // Generator基础构造函数（空实现）
 
-                            function p() {}
+                            // ========== Generator原型函数：Generator原型链的构造函数 ==========
+                            function p() {}  // Generator原型构造函数（空实现）
 
-                            function _() {}
+                            // ========== Generator实例函数：Generator实例的构造函数 ==========
+                            function _() {}  // Generator实例构造函数（空实现）
                             var d = {};
                             c(d, r, (function() {
                                 return this
@@ -151,10 +161,13 @@ System.register([], function(_export, _context) {
                             y && y !== n && i.call(y, r) && (d = y);
                             var v = _.prototype = m.prototype = Object.create(d);
 
+                            // ========== Generator方法定义函数：为Generator对象定义标准方法 ==========
+                            // 参数：t=目标对象
+                            // 功能：为对象添加next、throw、return三个标准Generator方法
                             function g(t) {
                                 ["next", "throw", "return"].forEach((function(e) {
                                     c(t, e, (function(t) {
-                                        return this._invoke(e, t)
+                                        return this._invoke(e, t)  // 调用内部_invoke方法
                                     }))
                                 }))
                             }
@@ -203,11 +216,17 @@ System.register([], function(_export, _context) {
                                 return o ? o.done ? (e[t.resultName] = o.value, e.next = t.nextLoc, "return" !== e.method && (e.method = "next", e.arg = void 0), e.delegate = null, h) : o : (e.method = "throw", e.arg = new TypeError("iterator result is not an object"), e.delegate = null, h)
                             }
 
+                            // ========== Try条目创建函数：创建Generator的try-catch-finally条目 ==========
+                            // 参数：t=位置数组 [tryLoc, catchLoc?, finallyLoc?, afterLoc?]
+                            // 功能：创建try条目对象并添加到tryEntries数组
                             function T(t) {
                                 var e = {
-                                    tryLoc: t[0]
+                                    tryLoc: t[0]  // try块的位置
                                 };
-                                1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e)
+                                1 in t && (e.catchLoc = t[1]),      // catch块的位置（可选）
+                                2 in t && (e.finallyLoc = t[2],     // finally块的位置（可选）
+                                          e.afterLoc = t[3]),      // finally后的位置（可选）
+                                this.tryEntries.push(e)            // 添加到try条目数组
                             }
 
                             function E(t) {
@@ -457,52 +476,93 @@ System.register([], function(_export, _context) {
                             return t
                         }
 
+                        // ========== 数组复制函数：创建数组的浅拷贝 ==========
+                        // 参数：t=源数组, e=复制长度（可选）
+                        // 返回：复制后的新数组
                         function G(t, e) {
-                            (null == e || e > t.length) && (e = t.length);
-                            for (var n = 0, i = new Array(e); n < e; n++) i[n] = t[n];
+                            (null == e || e > t.length) && (e = t.length);  // 设置默认复制长度
+                            for (var n = 0, i = new Array(e); n < e; n++)
+                                i[n] = t[n];  // 逐个复制元素
                             return i
                         }
 
+                        // ========== 迭代器创建函数：为可迭代对象创建迭代器 ==========
+                        // 参数：t=可迭代对象, e=是否允许类数组对象
+                        // 返回：迭代器函数
                         function z(t, e) {
+                            // 尝试获取Symbol.iterator或@@iterator
                             var n = "undefined" != typeof Symbol && t[Symbol.iterator] || t["@@iterator"];
-                            if (n) return (n = n.call(t)).next.bind(n);
+                            if (n) return (n = n.call(t)).next.bind(n);  // 返回原生迭代器
+
+                            // 处理数组或类数组对象
                             if (Array.isArray(t) || (n = function(t, e) {
                                     if (t) {
-                                        if ("string" == typeof t) return G(t, e);
-                                        var n = Object.prototype.toString.call(t).slice(8, -1);
-                                        return "Object" === n && t.constructor && (n = t.constructor.name), "Map" === n || "Set" === n ? Array.from(t) : "Arguments" === n || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n) ? G(t, e) : void 0
+                                        if ("string" == typeof t) return G(t, e);  // 字符串转数组
+                                        var n = Object.prototype.toString.call(t).slice(8, -1);  // 获取对象类型
+                                        return "Object" === n && t.constructor && (n = t.constructor.name),
+                                               "Map" === n || "Set" === n ? Array.from(t) :  // Map/Set转数组
+                                               "Arguments" === n || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n) ? G(t, e) : void 0  // 类数组对象
                                     }
                                 }(t)) || e && t && "number" == typeof t.length) {
-                                n && (t = n);
-                                var i = 0;
+                                n && (t = n);  // 使用转换后的数组
+                                var i = 0;     // 索引计数器
+                                // 返回自定义迭代器函数
                                 return function() {
                                     return i >= t.length ? {
-                                        done: !0
+                                        done: !0        // 迭代完成
                                     } : {
-                                        done: !1,
-                                        value: t[i++]
+                                        done: !1,       // 继续迭代
+                                        value: t[i++]   // 返回当前值并递增索引
                                     }
                                 }
                             }
+                            // 如果对象不可迭代，抛出错误
                             throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")
                         }
 
+                        // ========== 属性初始化函数：根据描述符初始化对象属性 ==========
+                        // 参数：t=目标对象, e=属性名, n=属性描述符, i=上下文对象
+                        // 功能：使用属性描述符在目标对象上定义属性
                         function U(t, e, n, i) {
                             n && Object.defineProperty(t, e, {
-                                enumerable: n.enumerable,
-                                configurable: n.configurable,
-                                writable: n.writable,
+                                enumerable: n.enumerable,      // 是否可枚举
+                                configurable: n.configurable,  // 是否可配置
+                                writable: n.writable,          // 是否可写
+                                // 如果有初始化器，调用它获取初始值；否则为undefined
                                 value: n.initializer ? n.initializer.call(i) : void 0
                             })
                         }
 
+                        // ========== 装饰器链处理函数：处理属性装饰器链 ==========
+                        // 参数：t=目标对象, e=属性名, n=装饰器数组, i=初始描述符, o=上下文对象
+                        // 返回：处理后的属性描述符
                         function W(t, e, n, i, o) {
-                            var r = {};
-                            return Object.keys(i).forEach((function(t) {
+                            var r = {};  // 创建新的属性描述符
+
+                            // 复制初始描述符的所有属性
+                            Object.keys(i).forEach((function(t) {
                                 r[t] = i[t]
-                            })), r.enumerable = !!r.enumerable, r.configurable = !!r.configurable, ("value" in r || r.initializer) && (r.writable = !0), r = n.slice().reverse().reduce((function(n, i) {
-                                return i(t, e, n) || n
-                            }), r), o && void 0 !== r.initializer && (r.value = r.initializer ? r.initializer.call(o) : void 0, r.initializer = void 0), void 0 === r.initializer && (Object.defineProperty(t, e, r), r = null), r
+                            })),
+
+                            // 设置默认属性特性
+                            r.enumerable = !!r.enumerable,     // 确保enumerable为布尔值
+                            r.configurable = !!r.configurable, // 确保configurable为布尔值
+                            ("value" in r || r.initializer) && (r.writable = !0),  // 如果有值或初始化器，设为可写
+
+                            // 从右到左应用装饰器链
+                            r = n.slice().reverse().reduce((function(n, i) {
+                                return i(t, e, n) || n  // 应用装饰器，如果返回值为空则保持原描述符
+                            }), r),
+
+                            // 处理初始化器
+                            o && void 0 !== r.initializer && (
+                                r.value = r.initializer ? r.initializer.call(o) : void 0,  // 调用初始化器获取值
+                                r.initializer = void 0  // 清除初始化器
+                            ),
+
+                            // 如果没有初始化器，直接定义属性
+                            void 0 === r.initializer && (Object.defineProperty(t, e, r), r = null),
+                            r
                         }
                         // ========== 游戏管理器系统初始化 ==========
                         // 这里初始化游戏中所有的管理器组件，每个管理器负责不同的功能模块
@@ -526,9 +586,10 @@ System.register([], function(_export, _context) {
                                 Nt = t("i", st.SoundManager),    // 音效管理器
                                 null == st.SoundAudioManager ? (
                                     l("SoundAudioManager not found"), // 如果找不到音频管理器则警告
-                                    (xt = st.SoundManager).SetSettingJson || (xt.SetSettingJson = function(t) {}),
-                                    xt.AddAudioClips || (xt.AddAudioClips = function(t) {}),
-                                    xt.ClearSetting || (xt.ClearSetting = function() {})
+                                    // 为SoundManager添加缺失的方法（如果不存在）
+                                    (xt = st.SoundManager).SetSettingJson || (xt.SetSettingJson = function(t) {}),  // 设置音频配置JSON（空实现）
+                                    xt.AddAudioClips || (xt.AddAudioClips = function(t) {}),                        // 添加音频片段（空实现）
+                                    xt.ClearSetting || (xt.ClearSetting = function() {})                            // 清除音频设置（空实现）
                                 ) : xt = st.SoundAudioManager,   // 使用高级音频管理器
 
                                 // UI和交互管理器
@@ -1062,7 +1123,7 @@ System.register([], function(_export, _context) {
                                         // 设置动画完成监听器：动画播放完毕时触发
                                         t.setTrackCompleteListener(s, (function() {
                                             // 清理监听器并完成Promise
-                                            t.setTrackCompleteListener(s, (function() {})),
+                                            t.setTrackCompleteListener(s, (function() {})),  // 清除完成监听器（空函数）
                                             c()  // 调用完成回调
                                         }))
                                     } else {
@@ -1126,11 +1187,16 @@ System.register([], function(_export, _context) {
                             }
                         }), $ = tt));
                         e._RF.pop(), e._RF.push({}, "2c465urF+5E6a8SAy0Y1679", "AppManager", void 0), e._RF.pop(), e._RF.push({}, "01a4bCeOlRFS4PxU4ftD5wn", "BackpackManager", void 0), e._RF.pop(), e._RF.push({}, "e98d6g3Sn5F/phbS0JGqk6v", "BuyBonusManager", void 0), e._RF.pop(), e._RF.push({}, "810fcmXyb9Bu4OzTZmIkoz9", "CommonGameManager", void 0),
+                            // ========== HTTP请求方法枚举：定义HTTP请求的类型 ==========
                             function(t) {
-                                t[t.Get = 0] = "Get", t[t.Post = 1] = "Post"
+                                t[t.Get = 0] = "Get",    // GET请求方法
+                                t[t.Post = 1] = "Post"   // POST请求方法
                             }(ut || (ut = {})),
+
+                            // ========== 错误处理策略枚举：定义错误的处理方式 ==========
                             function(t) {
-                                t[t.Ignore = 0] = "Ignore", t[t.Handle = 1] = "Handle"
+                                t[t.Ignore = 0] = "Ignore",  // 忽略错误
+                                t[t.Handle = 1] = "Handle"    // 处理错误
                             }(lt || (lt = {})), e._RF.pop(), e._RF.push({}, "0e324Erw0JDW6aCYO5d0i2g", "DailyMissionManager", void 0), e._RF.pop(), e._RF.push({}, "dd020H2ox5CQ70Z9VNWXYpK", "DebrisManager", void 0), e._RF.pop(), e._RF.push({}, "1fcfdTjgMdDr4mh99NzZ29B", "GaiaManager", void 0), e._RF.pop(), e._RF.push({}, "a3f63TygSlA6KwEkLDlQIoJ", "GiftCodeManager", void 0), e._RF.pop(), e._RF.push({}, "9692fSvI0xNR5GVPmbcEfzq", "IframeCommandManager", void 0), e._RF.pop(), e._RF.push({}, "d8221PEwlRBep+hz+x7w5Ot", "NewBottomBarManager", void 0);
                         // ========== GameState 游戏状态枚举：定义老虎机游戏的所有可能状态 ==========
                         // 这个枚举定义了游戏的主要状态和用户交互状态
@@ -1229,16 +1295,26 @@ System.register([], function(_export, _context) {
                             BTN_DECBET: "btn_DecBet"
                         });
                         e._RF.pop(), e._RF.push({}, "28748R+s5pCY7kwYZ0zkqKk", "NewExtraManager", void 0), e._RF.pop(), e._RF.push({}, "861e1J/bwRGlI4J13TOOh4y", "TrialManager", void 0),
+                            // ========== 播放状态枚举：定义媒体或动画的播放状态 ==========
                             function(t) {
-                                t[t.None = 0] = "None", t[t.Playing = 1] = "Playing", t[t.Item = 2] = "Item"
+                                t[t.None = 0] = "None",        // 无状态
+                                t[t.Playing = 1] = "Playing",  // 正在播放
+                                t[t.Item = 2] = "Item"         // 道具状态
                             }(Tt || (Tt = {})), e._RF.pop(), e._RF.push({}, "0f3df9al6NIJJ1/5ZP5aShG", "MsgBoxManager", void 0);
                         var wt;
                         t("M", "MSGBOX_TITLE_SYSTEM_INFO");
                         e._RF.pop(), e._RF.push({}, "8de065l1yBCNoeRGxK2yzaD", "StateManager", void 0);
-                        var Ct, It, At, Nt, Ot = t("B", (function() {}));
+                        // ========== 空函数定义：用于占位或默认回调 ==========
+                        var Ct, It, At, Nt, Ot = t("B", (function() {}));  // 空函数，用作默认回调或占位符
                         e._RF.pop(), e._RF.push({}, "c7e3d4LY9dOUokI+wu7YgCQ", "AutoShowManager", void 0),
+                            // ========== 自动显示类型枚举：定义自动显示管理器的显示类型 ==========
                             function(t) {
-                                t[t.SKY_BAR = 0] = "SKY_BAR", t[t.PAYTABLE = 1] = "PAYTABLE", t[t.LANDING = 2] = "LANDING", t[t.DISCOUNT = 3] = "DISCOUNT", t[t.EXTRA_BET = 4] = "EXTRA_BET", t[t.ICONBOX = 5] = "ICONBOX"
+                                t[t.SKY_BAR = 0] = "SKY_BAR",       // 天空栏显示
+                                t[t.PAYTABLE = 1] = "PAYTABLE",     // 赔付表显示
+                                t[t.LANDING = 2] = "LANDING",       // 着陆页显示
+                                t[t.DISCOUNT = 3] = "DISCOUNT",     // 折扣显示
+                                t[t.EXTRA_BET = 4] = "EXTRA_BET",   // 额外下注显示
+                                t[t.ICONBOX = 5] = "ICONBOX"        // 图标盒显示
                             }(It || (It = {})), e._RF.pop(), e._RF.push({}, "d388f5XkRRFcYXg5usnXTa/", "LocaleStringManager", void 0), e._RF.pop(), e._RF.push({}, "077a5gmYEpIQqr+YOtt+g08", "LocalStorageManager", void 0), e._RF.pop(), e._RF.push({}, "8c0f7IX3HNLY6BaWiL8u0j4", "SoundManager", void 0), e._RF.pop(), e._RF.push({}, "50f8dtxxuFDo6qJW6FBFBaO", "EventManager", void 0);
 
                         // ========== 游戏事件系统定义 ==========
@@ -1265,17 +1341,32 @@ System.register([], function(_export, _context) {
                             SkipIntro: "SkipIntro"                            // 跳过介绍动画事件
                         });
                         e._RF.pop(), e._RF.push({}, "18947v7ICNDlYz3G5vE642k", "LoadPrefabManager", void 0), e._RF.pop(), e._RF.push({}, "de7f6JwfsBHBYba0UlqLoFI", "NotificationManager", void 0), e._RF.pop(), e._RF.push({}, "81438uBGiNJXoDkKAmuxEJu", "FunctionControlManager", void 0), e._RF.pop(), e._RF.push({}, "3e41doUMVNLQbg53Jn6N9ch", "SoundAudioManager", void 0), e._RF.pop(), e._RF.push({}, "858d45NBqBLW5W3J41WER1G", "index", void 0), e._RF.pop(), e._RF.push({}, "1d854+nhA1JgLXZLaNHz9eU", "LicenseSetting", void 0),
+                            // ========== 许可设置枚举：定义游戏功能的许可配置 ==========
                             function(t) {
-                                t[t.ShopingMall = 1] = "ShopingMall", t[t.ShowAutoSetting = 16] = "ShowAutoSetting", t[t.NoSoundUnder1 = 17] = "NoSoundUnder1", t[t.NoQuickSpin = 18] = "NoQuickSpin", t[t.CloseManual = 39] = "CloseManual"
+                                t[t.ShopingMall = 1] = "ShopingMall",           // 购物商城功能
+                                t[t.ShowAutoSetting = 16] = "ShowAutoSetting",  // 显示自动设置
+                                t[t.NoSoundUnder1 = 17] = "NoSoundUnder1",      // 1以下无声音
+                                t[t.NoQuickSpin = 18] = "NoQuickSpin",          // 禁用快速旋转
+                                t[t.CloseManual = 39] = "CloseManual"           // 关闭手册功能
                             }(Pt || (Pt = t("S", {}))), e._RF.pop(), e._RF.push({}, "74f7dljUZhO+6o0Pu2tNSAk", "ConnectionManager", void 0),
+                            // ========== 连接类型枚举：定义网络连接的类型 ==========
                             function(t) {
-                                t[t.TYPE_HTTP = 1] = "TYPE_HTTP", t[t.TYPE_WEBSOCKET = 2] = "TYPE_WEBSOCKET", t[t.MAX = 3] = "MAX"
+                                t[t.TYPE_HTTP = 1] = "TYPE_HTTP",           // HTTP连接类型
+                                t[t.TYPE_WEBSOCKET = 2] = "TYPE_WEBSOCKET", // WebSocket连接类型
+                                t[t.MAX = 3] = "MAX"                        // 最大连接类型数量
                             }(Ft || (Ft = {})),
+
+                            // ========== HTTP方法类型枚举：定义HTTP请求方法 ==========
                             function(t) {
-                                t.TYPE_GET = "get", t.TYPE_POST = "post"
+                                t.TYPE_GET = "get",   // GET请求方法
+                                t.TYPE_POST = "post"  // POST请求方法
                             }(Lt || (Lt = {})), e._RF.pop(), e._RF.push({}, "34d81gQVlJAaJJHg6IUTjH6", "TimeBool", void 0),
+                            // ========== 数值常量枚举：定义时间管理中使用的数值边界 ==========
                             function(t) {
-                                t[t.MAX_UINT = 4294967295] = "MAX_UINT", t[t.MAX_UINT64 = 0x10000000000000000] = "MAX_UINT64", t[t.MAX_INT = -1] = "MAX_INT", t[t.MIN_INT = 0] = "MIN_INT"
+                                t[t.MAX_UINT = 4294967295] = "MAX_UINT",                    // 32位无符号整数最大值
+                                t[t.MAX_UINT64 = 0x10000000000000000] = "MAX_UINT64",      // 64位无符号整数最大值
+                                t[t.MAX_INT = -1] = "MAX_INT",                              // 最大整数标记（用作无效值）
+                                t[t.MIN_INT = 0] = "MIN_INT"                                // 最小整数标记
                             }(Mt || (Mt = {}));
                         // ========== TimeBool 时间管理类：用于处理基于时间的布尔状态 ==========
                         var Gt, zt = function() {
@@ -1396,8 +1487,10 @@ System.register([], function(_export, _context) {
                             }, t
                         }();
                         e._RF.pop(), e._RF.push({}, "5cd11K4+Y1DBJ0WZfuiBSee", "Common_IdleState", void 0);
-                        var Ut, Wt, Ht, Jt, jt, Yt, Kt, qt, Xt, Vt, Qt, Zt, $t, te, ee, ne, ie, oe, re, ae, se, ce, ue, le, he, me, pe, _e, de, fe, ye, ve = 1,
-                            ge = 10,
+                        // ========== 组件属性装饰器变量声明：用于属性装饰器的变量定义 ==========
+                        var Ut, Wt, Ht, Jt, jt, Yt, Kt, qt, Xt, Vt, Qt, Zt, $t, te, ee, ne, ie, oe, re, ae, se, ce, ue, le, he, me, pe, _e, de, fe, ye,
+                            ve = 1,   // 默认值常量1
+                            ge = 10,  // 默认值常量10
                             Se = r.ccclass;
                         t("u", Se("Common_IdleState")(Gt = function(t) {
                             function e() {
@@ -2298,8 +2391,8 @@ System.register([], function(_export, _context) {
                                             // 确保是当前动画的完成事件
                                             m && m.animation.name == n.animation.name && (
                                                 // 清理监听器
-                                                t.setTrackCompleteListener(m, (function() {})),
-                                                t.setTrackInterruptListener(m, (function() {})),
+                                                t.setTrackCompleteListener(m, (function() {})),   // 清除完成监听器（空函数）
+                                                t.setTrackInterruptListener(m, (function() {})),  // 清除中断监听器（空函数）
                                                 // 清理取消回调并完成Promise
                                                 a.m_cancelCbs[t.name] && a.m_cancelCbs[t.name][e] && (a.m_cancelCbs[t.name][e] = null),
                                                 s(!1)  // 正常完成
@@ -2311,8 +2404,8 @@ System.register([], function(_export, _context) {
                                             // 确保是当前动画的中断事件
                                             m && m.animation.name == n.animation.name && (
                                                 // 清理监听器
-                                                t.setTrackCompleteListener(m, (function() {})),
-                                                t.setTrackInterruptListener(m, (function() {})),
+                                                t.setTrackCompleteListener(m, (function() {})),   // 清除完成监听器（空函数）
+                                                t.setTrackInterruptListener(m, (function() {})),  // 清除中断监听器（空函数）
                                                 // 清理取消回调并完成Promise
                                                 a.m_cancelCbs[t.name] && a.m_cancelCbs[t.name][e] && (a.m_cancelCbs[t.name][e] = null),
                                                 s(!0)  // 被中断
@@ -2672,19 +2765,28 @@ System.register([], function(_export, _context) {
                             }],
                             bi = p({}),
                             Ti = p({});
+                        // ========== 淡化类型枚举：定义动画淡化效果的类型 ==========
                         ! function(t) {
-                            t[t.None = 0] = "None", t[t.FadeIn = 1] = "FadeIn", t[t.FadeOut = 2] = "FadeOut"
+                            t[t.None = 0] = "None",         // 无淡化效果
+                            t[t.FadeIn = 1] = "FadeIn",     // 淡入效果
+                            t[t.FadeOut = 2] = "FadeOut"    // 淡出效果
                         }(di || (di = {}));
                         var Ei, wi = p({
                                 None: di.None,
                                 FadeIn: di.FadeIn,
                                 FadeOut: di.FadeOut
                             }),
+                            // ========== 字符串哈希函数：计算字符串的哈希值 ==========
+                            // 参数：t=输入字符串
+                            // 返回：字符串的32位哈希值
                             Ci = function(t) {
-                                var e, n = 0;
-                                if (0 === t.length) return n;
-                                for (e = 0; e < t.length; e++) n = (n << 5) - n + t.charCodeAt(e), n |= 0;
-                                return n
+                                var e, n = 0;  // 初始化哈希值
+                                if (0 === t.length) return n;  // 空字符串返回0
+                                // 遍历字符串的每个字符，使用djb2哈希算法
+                                for (e = 0; e < t.length; e++)
+                                    n = (n << 5) - n + t.charCodeAt(e),  // 哈希算法：(hash * 31) + char
+                                    n |= 0;                               // 转换为32位整数
+                                return n  // 返回计算得到的哈希值
                             },
                             Ii = (In = fi("_TweenInfo"), An = yi({
                                 visible: !1,
@@ -2713,14 +2815,18 @@ System.register([], function(_export, _context) {
                                 }
                                 return L(t, [{
                                     key: "_easingIdx",
-                                    get: function() {},
-                                    set: function(t) {}
+                                    // ========== _easingIdx属性访问器：获取缓动索引（空实现）==========
+                                    get: function() {},  // 空实现，不返回任何值
+                                    // ========== _easingIdx属性设置器：设置缓动索引（空实现）==========
+                                    set: function(t) {}  // 空实现，不执行任何操作
                                 }, {
                                     key: "_fadeType",
+                                    // ========== _fadeType属性访问器：获取淡化类型 ==========
                                     get: function() {
-                                        return this.__fadeType
+                                        return this.__fadeType  // 返回内部淡化类型值
                                     },
-                                    set: function(t) {}
+                                    // ========== _fadeType属性设置器：设置淡化类型（空实现）==========
+                                    set: function(t) {}  // 空实现，不执行任何操作
                                 }]), t
                             }()).prototype, "m_EasingName", [An], {
                                 configurable: !0,
@@ -2925,8 +3031,8 @@ System.register([], function(_export, _context) {
                                 for (var t = 0; t < this._TweenList.length; t++) this._TweenList[t]._EasingEnumList = this._EasingEnumList
                             },
 
-                            // 空的start方法：组件启动时调用（当前无特殊处理）
-                            n.start = function() {},
+                            // ========== 组件启动方法：组件启动时调用（当前无特殊处理）==========
+                            n.start = function() {},  // 空实现，子类可重写以添加启动逻辑
 
                             // ========== 震动淡化效果方法：创建带淡入淡出效果的震动动画 ==========
                             // 参数：t=缓动对象, e=持续时间, n=频率, i=幅度, o=淡化类型, r=权重向量, a=缓动函数名
@@ -2961,9 +3067,12 @@ System.register([], function(_export, _context) {
                                         position: h  // 目标位置
                                     }, {
                                         easing: a,                    // 缓动函数
-                                        onStart: function(t) {},     // 开始回调（空）
-                                        onUpdate: function(t, e) {}, // 更新回调（空）
-                                        onComplete: function(t) {}   // 完成回调（空）
+                                        // ========== 缓动开始回调：缓动动画开始时触发 ==========
+                                        onStart: function(t) {},     // 参数t=缓动对象，当前为空实现
+                                        // ========== 缓动更新回调：缓动动画每帧更新时触发 ==========
+                                        onUpdate: function(t, e) {}, // 参数t=缓动对象, e=进度值，当前为空实现
+                                        // ========== 缓动完成回调：缓动动画完成时触发 ==========
+                                        onComplete: function(t) {}   // 参数t=缓动对象，当前为空实现
                                     })
                                 }
                                 return t  // 返回更新后的缓动对象
