@@ -1,0 +1,13 @@
+name: gemini-proxy
+version: '3'
+services:
+  gemini-proxy:
+    image: dreamhartley705/gemini-proxy-panel:latest
+    container_name: gemini-proxy
+    environment:
+      - ADMIN_PASSWORD=123456
+      - SESSION_SECRET_KEY=wX5z8K3j9mPq2rVt7nYfLc4hBx6gTdQk9uJ0eWiA1Zo=
+      - PORT=7000
+    ports:
+      - "7000:7000"
+    restart: unless-stopped

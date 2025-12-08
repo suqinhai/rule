@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHP Games Mobile Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(180deg, #1a237e 0%, #3949ab 100%);
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 375px;
+            margin: 0 auto;
+            background: linear-gradient(180deg, #1a237e 0%, #3949ab 100%);
+            min-height: 100vh;
+        }
+
+        /* Top notification bar */
+        .notification-bar {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+
+        .notification-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .megaphone {
+            width: 20px;
+            height: 20px;
+            background: #ff4444;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+
+        .stars {
+            color: #ffa500;
+            font-size: 10px;
+        }
+
+        .rating {
+            font-size: 10px;
+            margin-left: 4px;
+        }
+
+        .download-btn {
+            background: #3f51b5;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 10px;
+            border: none;
+            color: white;
+        }
+
+        .close-btn {
+            background: #666;
+            border: none;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 12px;
+        }
+
+        /* Header */
+        .header {
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            background: linear-gradient(45deg, #00bcd4, #4caf50);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+            color: white;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 30px;
+            height: 30px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .user-details {
+            font-size: 12px;
+        }
+
+        .balance {
+            color: #4caf50;
+            font-weight: bold;
+        }
+
+        .flag {
+            width: 20px;
+            height: 15px;
+            background: linear-gradient(to bottom, #012169 33%, white 33%, white 66%, #c8102e 66%);
+            position: relative;
+        }
+
+        .flag::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                linear-gradient(45deg, transparent 40%, #c8102e 40%, #c8102e 45%, transparent 45%),
+                linear-gradient(-45deg, transparent 40%, #c8102e 40%, #c8102e 45%, transparent 45%),
+                linear-gradient(45deg, transparent 55%, #c8102e 55%, #c8102e 60%, transparent 60%),
+                linear-gradient(-45deg, transparent 55%, #c8102e 55%, #c8102e 60%, transparent 60%);
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+        }
+
+        /* Promotional banner */
+        .promo-banner {
+            margin: 0 15px 20px;
+            background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%);
+            border-radius: 15px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .promo-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .promo-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .promo-subtitle {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .character {
+            position: absolute;
+            right: 10px;
+            bottom: -10px;
+            width: 80px;
+            height: 80px;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="40" r="15" fill="%23fdbcb4"/><circle cx="50" cy="70" r="20" fill="%23ff6b35"/><circle cx="45" cy="35" r="2" fill="black"/><circle cx="55" cy="35" r="2" fill="black"/><path d="M45 45 Q50 50 55 45" stroke="black" fill="none"/></svg>') no-repeat center;
+            background-size: contain;
+        }
+
+        .coins {
+            position: absolute;
+            right: 20px;
+            bottom: 10px;
+            width: 40px;
+            height: 20px;
+            background: radial-gradient(circle, #ffd700 30%, #ffed4e  70%);
+            border-radius: 50%;
+        }
+
+        /* Deposit notification */
+        .deposit-notification {
+            background: rgba(255, 255, 255, 0.1);
+            margin: 0 15px 15px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Navigation tabs */
+        .nav-tabs {
+            display: flex;
+            padding: 0 15px;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .nav-tab {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            flex: 1;
+        }
+
+        .nav-tab.active {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .nav-icon {
+            font-size: 16px;
+        }
+
+        /* Game filters */
+        .game-filters {
+            display: flex;
+            padding: 0 15px;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .filter-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 15px;
+            font-size: 12px;
+        }
+
+        .filter-btn.active {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .facebook-icon {
+            background: #1877f2;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: auto;
+            font-size: 14px;
+        }
+
+        /* Search and filters */
+        .search-section {
+            padding: 0 15px;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-bar {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            padding: 10px 15px;
+            border-radius: 20px;
+            color: white;
+            font-size: 12px;
+        }
+
+        .search-bar::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .filter-icons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-icon {
+            width: 30px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        /* Game providers */
+        .game-providers {
+            padding: 0 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .provider-logo {
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            padding: 8px 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .nav-arrow {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-size: 12px;
+        }
+
+        /* Game grid */
+        .game-grid {
+            padding: 0 15px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 80px;
+        }
+
+        .game-card {
+            aspect-ratio: 1;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="20" fill="%23fdbcb4"/><circle cx="45" cy="45" r="2" fill="black"/><circle cx="55" cy="45" r="2" fill="black"/></svg>') no-repeat center;
+            background-size: 60%;
+        }
+
+        /* Bottom navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 375px;
+            background: rgba(26, 35, 126, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            padding: 10px 0;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 10px;
+        }
+
+        .nav-item.active {
+            color: white;
+        }
+
+        .nav-item-icon {
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .nav-item.active .nav-item-icon {
+            background: #4caf50;
+        }
+
+        .deposit-special {
+            background: #4caf50 !important;
+            color: white !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Top notification bar -->
+        <div class="notification-bar">
+            <div class="notification-left">
+                <div class="megaphone">📢</div>
+                <span>May download maka...</span>
+                <div class="stars">★★★★★</div>
+                <span class="rating">5.0</span>
+            </div>
+            <div>
+                <button class="download-btn">Download</button>
+                <button class="close-btn">×</button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">PHPGAMES</div>
+            <div class="user-info">
+                <div class="user-avatar">👤</div>
+                <div class="user-details">
+                    <div>qwe123</div>
+                    <div class="balance">💰 10.00</div>
+                </div>
+                <div class="flag"></div>
+                <button class="menu-btn">☰</button>
+            </div>
+        </div>
+
+        <!-- Promotional banner -->
+        <div class="promo-banner">
+            <div class="promo-content">
+                <div class="promo-title">FAST & EASY! DEPOSIT<br>WITH PAYMAYA</div>
+                <div class="promo-subtitle">RECEIVE A +6% EVERY DEPOSIT</div>
+            </div>
+            <div class="character"></div>
+            <div class="coins"></div>
+        </div>
+
+        <!-- Deposit notification -->
+        <div class="deposit-notification">
+            <span>⭐</span>
+            <span>Deposit 100 Get F</span>
+        </div>
+
+        <!-- Navigation tabs -->
+        <div class="nav-tabs">
+            <button class="nav-tab active">
+                <div class="nav-icon">🔥</div>
+                <span>Hot</span>
+            </button>
+            <button class="nav-tab">
+                <div class="nav-icon">🎰</div>
+                <span>Slots</span>
+            </button>
+            <button class="nav-tab">
+                <div class="nav-icon">🃏</div>
+                <span>Cards</span>
+            </button>
+            <button class="nav-tab">
+                <div class="nav-icon">🎣</div>
+                <span>Fishing</span>
+            </button>
+        </div>
+
+        <!-- Game filters -->
+        <div class="game-filters">
+            <button class="filter-btn active">All</button>
+            <button class="filter-btn">New Games</button>
+            <button class="filter-btn">3 Reels</button>
+            <button class="filter-btn">5 Reels</button>
+            <div class="facebook-icon">f</div>
+        </div>
+
+        <!-- Search and filters -->
+        <div class="search-section">
+            <input type="text" class="search-bar" placeholder="🔍 Search">
+            <div class="filter-icons">
+                <div class="filter-icon">🌐</div>
+                <div class="filter-icon">⭐</div>
+                <div class="filter-icon">🔥</div>
+            </div>
+        </div>
+
+        <!-- Game providers -->
+        <div class="game-providers">
+            <button class="nav-arrow">‹</button>
+            <div class="provider-logo">JILI</div>
+            <div class="provider-logo">PG</div>
+            <div class="provider-logo">JDB</div>
+            <button class="nav-arrow">›</button>
+        </div>
+
+        <!-- Game grid -->
+        <div class="game-grid">
+            <div class="game-card"></div>
+            <div class="game-card"></div>
+            <div class="game-card"></div>
+            <div class="game-card"></div>
+            <div class="game-card"></div>
+            <div class="game-card"></div>
+        </div>
+
+        <!-- Bottom navigation -->
+        <div class="bottom-nav">
+            <button class="nav-item active">
+                <div class="nav-item-icon">🏠</div>
+                <span>Home</span>
+            </button>
+            <button class="nav-item">
+                <div class="nav-item-icon">🎁</div>
+                <span>Promotion</span>
+            </button>
+            <button class="nav-item deposit-special">
+                <div class="nav-item-icon">💰</div>
+                <span>Deposit</span>
+            </button>
+            <button class="nav-item">
+                <div class="nav-item-icon">👥</div>
+                <span>Invite</span>
+            </button>
+            <button class="nav-item">
+                <div class="nav-item-icon">👤</div>
+                <span>Member</span>
+            </button>
+        </div>
+    </div>
+</body>
+</html>
