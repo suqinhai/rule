@@ -1,6 +1,9 @@
+#!/bin/bash
 
+# VLESS + TCP + REALITY 安装脚本
+# 优点：不需要域名、高性能、TCP不易被限速、安全性高
+#
 # 两个脚本对比
-
 # | 特性       | install-vless-vpn.sh (原) | install-vless-reality.sh (新) |
 # |------------|---------------------------|-------------------------------|
 # | 协议       | VLESS + mKCP (UDP)        | VLESS + TCP + REALITY         |
@@ -11,12 +14,13 @@
 # | 抗丢包     | 好                        | 一般                          |
 # | 被限速风险 | 高（UDP易被QoS）          | 低（TCP+443端口）             |
 
-#!/bin/bash
-
-# VLESS + TCP + REALITY 安装脚本
-# 优点：不需要域名、高性能、TCP不易被限速、安全性高
-
 set -e
+
+# 检查 root 权限
+if [ "$EUID" -ne 0 ]; then
+    echo "请使用 root 权限运行此脚本: sudo $0"
+    exit 1
+fi
 
 echo "========================================="
 echo "  VLESS + REALITY 安装脚本"
@@ -25,15 +29,15 @@ echo "========================================="
 # 更新系统并安装依赖
 echo "[1/6] 更新系统..."
 apt update -y && apt upgrade -y
-apt install -y curl unzip jq
+apt install -y curl unzip jq openssl
 
 # 下载并安装 XRay
 echo "[2/6] 安装 XRay..."
 if [ ! -f /usr/local/bin/xray ]; then
-    curl -L -o xray.zip https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip
-    unzip -o xray.zip -d /usr/local/bin/
+    curl -L -o /tmp/xray.zip https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip
+    unzip -o /tmp/xray.zip -d /usr/local/bin/
     chmod +x /usr/local/bin/xray
-    rm xray.zip
+    rm /tmp/xray.zip
 else
     echo "XRay 已存在，跳过安装"
 fi
@@ -48,8 +52,17 @@ echo "[3/6] 生成 UUID: $UUID"
 # 生成 REALITY 密钥对
 echo "[4/6] 生成 REALITY 密钥对..."
 KEYS=$(/usr/local/bin/xray x25519)
-PRIVATE_KEY=$(echo "$KEYS" | grep "Private key:" | awk '{print $3}')
-PUBLIC_KEY=$(echo "$KEYS" | grep "Public key:" | awk '{print $3}')
+# xray x25519 输出格式: PrivateKey: xxx \n Password: xxx (Password 实际是公钥)
+PRIVATE_KEY=$(echo "$KEYS" | grep "PrivateKey:" | awk '{print $2}')
+PUBLIC_KEY=$(echo "$KEYS" | grep "Password:" | awk '{print $2}')
+
+# 验证密钥是否生成成功
+if [ -z "$PRIVATE_KEY" ] || [ -z "$PUBLIC_KEY" ]; then
+    echo "错误：密钥生成失败，xray x25519 输出："
+    echo "$KEYS"
+    exit 1
+fi
+
 echo "Private Key: $PRIVATE_KEY"
 echo "Public Key: $PUBLIC_KEY"
 
@@ -58,7 +71,7 @@ SHORT_ID=$(openssl rand -hex 8)
 echo "Short ID: $SHORT_ID"
 
 # 获取服务器 IP
-SERVER_IP=$(curl -s ifconfig.me)
+SERVER_IP=$(curl -s ifconfig.me || curl -s ip.sb || curl -s ipinfo.io/ip)
 echo "服务器 IP: $SERVER_IP"
 
 # 目标伪装网站（使用大型网站）
@@ -67,7 +80,7 @@ DEST_PORT=443
 
 # 创建服务器配置文件
 echo "[5/6] 创建配置文件..."
-cat << EOF > /etc/xray/config.json
+cat > /etc/xray/config.json << EOF
 {
   "log": {
     "loglevel": "warning"
@@ -80,7 +93,7 @@ cat << EOF > /etc/xray/config.json
       "settings": {
         "clients": [
           {
-            "id": "$UUID",
+            "id": "${UUID}",
             "flow": "xtls-rprx-vision"
           }
         ],
@@ -94,12 +107,12 @@ cat << EOF > /etc/xray/config.json
           "dest": "${DEST_SERVER}:${DEST_PORT}",
           "xver": 0,
           "serverNames": [
-            "$DEST_SERVER",
+            "${DEST_SERVER}",
             "microsoft.com"
           ],
-          "privateKey": "$PRIVATE_KEY",
+          "privateKey": "${PRIVATE_KEY}",
           "shortIds": [
-            "$SHORT_ID"
+            "${SHORT_ID}"
           ]
         }
       },
@@ -125,8 +138,17 @@ cat << EOF > /etc/xray/config.json
 }
 EOF
 
+# 验证配置文件
+echo "验证配置文件..."
+if ! /usr/local/bin/xray -test -config /etc/xray/config.json; then
+    echo "配置文件验证失败！"
+    cat /etc/xray/config.json
+    exit 1
+fi
+echo "配置文件验证通过"
+
 # 创建 systemd 服务
-cat << EOF > /etc/systemd/system/xray.service
+cat > /etc/systemd/system/xray.service << EOF
 [Unit]
 Description=Xray Service
 After=network.target
@@ -144,7 +166,7 @@ EOF
 
 # 优化系统网络参数
 echo "[*] 优化系统网络参数..."
-cat << EOF > /etc/sysctl.d/99-xray.conf
+cat > /etc/sysctl.d/99-xray.conf << EOF
 net.core.rmem_max=16777216
 net.core.wmem_max=16777216
 net.ipv4.tcp_rmem=4096 87380 16777216
@@ -161,6 +183,16 @@ systemctl daemon-reload
 systemctl enable xray
 systemctl restart xray
 sleep 2
+
+# 检查服务状态
+if systemctl is-active --quiet xray; then
+    echo "XRay 服务启动成功！"
+else
+    echo "XRay 服务启动失败，查看日志："
+    journalctl -u xray -n 20 --no-pager
+    exit 1
+fi
+
 systemctl status xray --no-pager
 
 # 生成客户端配置链接
@@ -186,7 +218,7 @@ echo "$CLIENT_URL"
 echo ""
 
 # 保存配置信息
-cat << EOF > /etc/xray/client-info.txt
+cat > /etc/xray/client-info.txt << EOF
 ========================================
 VLESS + REALITY 客户端配置信息
 ========================================
