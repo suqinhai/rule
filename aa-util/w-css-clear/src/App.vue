@@ -1,48 +1,285 @@
 <template>
-    <div class="ui-popup ui-popup--center safe-area-top safe-area-bottom ui-popover ui-popover--light" tabindex="0"
-        style="width: fit-content; z-index: 2006; position: absolute; left: 14px; top: 158px; margin: 0px;"
-        data-popper-placement="bottom-start" role="listbox" aria-label="国家/地区选择">
-        <div class="ui-popover__content ui-popover__content--vertical">
-            <div class="ui-select__options _dropdown_g8r6m_131">
-                <div
-                    class="_main_10sa6_62 lobby-scroll lobby-scroll--y lobby-scroll--system-scrollbar lobby-scroll--is-desktop ui-select__scroll">
-                    <div v-for="option in options" :key="option.id" class="ui-options__option"
-                        :class="{ 'ui-options__option--active': option.active }" role="option"
-                        :aria-selected="option.active">
-                        <span class="ui-options__option-content">
-                            <div class="_item_g8r6m_134">
-                                <img class="lobby-image lobby-image--skeleton _itemPrefix_g8r6m_142" data-status="success" data-thumb="0"
-                                    :data-id="option.id" :src="option.flagSrc" :alt="option.name" loading="lazy" />
-                                <span class="_itemText_g8r6m_147">{{ option.name }} ({{ option.code }})</span>
-                            </div>
-                        </span>
-                    </div>
+    <div class="_date-select_1wtct_45 lobby-date-select">
+        <span class="ui-popover__wrapper">
+            <div class="_date-block_1wtct_49 lobby-date-select__block lobby-date-select__block--focus"><span
+                    class="_label_1wtct_65">今日</span><i class="_icon-arrow_1wtct_68 _arrow-up_1wtct_77"
+                    style="display: inline-flex; justify-content: center; align-items: center;"><svg width="1em"
+                        height="1em" class="">
+                        <use></use>
+                    </svg></i></div>
+        </span>
+    </div>   
+    <div class="ui-popup ui-popup--center ui-popover ui-popover--light"
+        style="z-index: 2016; position: absolute; left: 41px; top: 237px; margin: 0px;">
+        <div class="ui-popover__content">
+            <div class="ui-picker-group _date-picker_1wtct_112">
+                <div>
+                    <div class="_quick-options_1wtct_151"><span
+                            class="_quick-option_1wtct_151 _active_1wtct_172">今日</span><span
+                            class="_quick-option_1wtct_151">昨日</span><span
+                            class="_quick-option_1wtct_151">本周</span><span
+                            class="_quick-option_1wtct_151">上周</span><span
+                            class="_quick-option_1wtct_151">本月</span><span
+                            class="_quick-option_1wtct_151">上月</span><span
+                            class="_quick-option_1wtct_151">全部</span></div>
                 </div>
+                <ul class="ui-picker-group__buttons" style="height: 0.8rem;">
+                    <li>
+                        <div><button
+                                type="button"
+                                class="ui-button ui-button--default ui-button--normal ui-button--plain ui-picker-group__cancel"
+                                style="background: transparent;">
+                                <div class="ui-button__content">
+                                    <div
+                                        style="justify-content: flex-start; transition: width 300ms; display: none; overflow: hidden;">
+                                        <div style="flex-shrink: 0;"></div>
+                                    </div><span class="ui-button__text">取 消</span>
+                                </div>
+                            </button></div>
+                    </li>
+                    <li>
+                        <div><button
+                                type="button" class="ui-button ui-button--default ui-button--normal">
+                                <div class="ui-button__content">
+                                    <div
+                                        style="justify-content: flex-start; transition: width 300ms; display: none; overflow: hidden;">
+                                        <div style="flex-shrink: 0;"></div>
+                                    </div><span class="ui-button__text">确 认</span>
+                                </div>
+                            </button></div>
+                    </li>
+                </ul>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-    import { ref } from 'vue'
 
-    const options = ref([
-        {
-            id: 'c4e1d645-e797-4418-af4f-25f2aa9e91bf',
-            name: '中国',
-            code: '+86',
-            flagSrc: 'https://oss.tyf147.cc/country/nationalflag/ChineseMainland.png',
-            active: true
-        },
-        {
-            id: 'e0aa5a60-2bb2-4790-b19f-c1f363d12924',
-            name: '阿拉伯联合酋长国',
-            code: '+971',
-            flagSrc: 'https://oss.tyf147.cc/country/nationalflag/UnitedArabEmirates.png',
-            active: false
-        }
-    ])
 </script>
-<style scoped>
-    
+
+<style>
+    ._date-select_1wtct_45 {
+    height: .5rem;
+    position: relative
+}
+
+._date-select_1wtct_45 ._date-block_1wtct_49 {
+    align-items: center;
+    background-color: var(--skin__bg_2);
+    border: var(--lobby__px) solid var(--skin__border);
+    border-radius: .9rem;
+    color: var(--skin__neutral_2);
+    cursor: pointer;
+    display: flex;
+    font-size: .2rem;
+    height: .5rem;
+    justify-content: space-between;
+    min-width: 1.3rem;
+    padding: 0 .2rem;
+    position: relative;
+    transition: border-color .2s ease
+}
+
+._date-select_1wtct_45 ._date-block_1wtct_49 ._label_1wtct_65 {
+    white-space: nowrap
+}
+
+._date-select_1wtct_45 ._date-block_1wtct_49 ._icon-arrow_1wtct_68 {
+    color: var(--skin__neutral_2);
+    font-size: .2rem;
+    margin-left: .05rem;
+    transition: transform .3s linear
+}
+
+._date-select_1wtct_45 ._date-block_1wtct_49 ._icon-arrow_1wtct_68._arrow-up_1wtct_77 {
+    transform: rotate(90deg)
+}
+
+._date-select_1wtct_45 .ui-picker-group .ui-picker-group__cancel {
+    border-color: var(--skin__primary);
+    color: var(--skin__primary)
+}
+
+._date-select_1wtct_45 .lobby-date-select__block--focus {
+    border-color: var(--skin__primary)
+}
+
+._date-picker_1wtct_112 {
+    border: var(--lobby__px) solid var(--skin__border);
+    box-shadow: 0 .04rem .12rem rgba(0, 0, 0, .1);
+    display: flex;
+    flex-direction: column;
+    width: 7.1rem
+}
+
+._date-picker_1wtct_112 .ui-picker-group__buttons {
+    margin-bottom: .1rem
+}
+
+._date-picker_1wtct_112 .ui-picker-group__buttons:last-of-type {
+    margin-bottom: .2rem
+}
+
+._date-picker_1wtct_112 ._quick-options_1wtct_151 {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .2rem;
+    padding: .2rem
+}
+
+._date-picker_1wtct_112 ._quick-options_1wtct_151 ._quick-option_1wtct_151 {
+    align-items: center;
+    border: var(--lobby__px) solid var(--skin__border);
+    border-radius: .14rem;
+    box-sizing: border-box;
+    color: var(--skin__lead);
+    cursor: pointer;
+    display: flex;
+    font-size: .24rem;
+    height: .7rem;
+    justify-content: center;
+    text-align: center;
+    user-select: none;
+    width: calc(33.33333% - .13333rem)
+}
+
+._date-picker_1wtct_112 ._quick-options_1wtct_151 ._quick-option_1wtct_151._active_1wtct_172 {
+    border-color: var(--skin__primary);
+    color: var(--skin__primary)
+}
+
+.ui-button {
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: .14rem;
+    box-sizing: border-box;
+    cursor: pointer;
+    display: inline-block;
+    font-size: .24rem;
+    height: .7rem;
+    line-height: 1.2;
+    padding: 0;
+    position: relative;
+    text-align: center;
+    transition: opacity .2s;
+    -webkit-font-smoothing: auto
+}
+
+.ui-button:before {
+    background: #000;
+    border: inherit;
+    border-color: #000;
+    border-radius: inherit;
+    content: " ";
+    height: 100%;
+    left: 50%;
+    opacity: 0;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%
+}
+
+.ui-button:active:before {
+    opacity: .1
+}
+
+.ui-button--default {
+    background: var(--skin__primary);
+    border: var(--lobby__px) solid var(--skin__primary);
+    color: var(--skin__text_primary)
+}
+
+.ui-button--plain {
+    background: transparent
+}
+
+.ui-button--plain.ui-button--default {
+    border-color: var(--skin__border);
+    color: var(--skin__neutral_1)
+}
+
+.ui-button--normal {
+    font-size: .24rem;
+    height: .7rem;
+    padding: 0 .15rem;
+    width: 2.2rem
+}
+
+.ui-button__content {
+    align-items: center;
+    display: flex;
+    height: 100%;
+    justify-content: center
+}
+
+.ui-button__text {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    word-break: break-word;
+    -webkit-box-orient: vertical
+}
+
+.ui-popup {
+    box-sizing: border-box;
+    max-height: 100%;
+    position: absolute;
+    transform-origin: center center;
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto
+}
+
+.ui-popup--center {
+    left: 0;
+    margin: 0 auto;
+    max-width: calc(100vw - .32rem);
+    position: relative;
+    right: 0;
+    width: fit-content
+}
+
+.ui-popover {
+    background-color: transparent;
+    position: absolute
+}
+
+.ui-popover.ui-popup {
+    overflow: visible
+}
+
+.ui-popover__wrapper {
+    cursor: pointer;
+    display: inline-block;
+    max-width: 100%
+}
+
+.ui-popover__content {
+    border-radius: .14rem;
+    overflow: hidden
+}
+
+.ui-popover[data-popper-placement=top] {
+    transform-origin: 50% 100%
+}
+
+.ui-popover[data-popper-placement=left] {
+    transform-origin: 100% 50%
+}
+
+.ui-popover[data-popper-placement=bottom-start] {
+    transform-origin: 0 0
+}
+
+.ui-popover--light {
+    color: var(--skin__neutral_2)
+}
+
+.ui-popover--light .ui-popover__content {
+    background: var(--skin__bg_2);
+    box-shadow: 0 .03rem .07rem var(--skin__web_left_bg_shadow)
+}
 </style>

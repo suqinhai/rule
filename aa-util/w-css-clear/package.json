@@ -13,5 +13,8 @@
     "cssnano": "^7.1.2",
     "postcss": "^8.4.47",
     "uncss": "^0.17.3"
+  },
+  "devDependencies": {
+    "purgecss": "^7.0.2"
   }
 }
