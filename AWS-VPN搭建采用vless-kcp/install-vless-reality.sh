@@ -2,6 +2,9 @@
 
 # VLESS + TCP + REALITY 安装脚本
 # 优点：不需要域名、高性能、TCP不易被限速、安全性高
+
+# VLESS + TCP + REALITY 安装脚本
+# 优点：不需要域名、高性能、TCP不易被限速、安全性高
 #
 # 两个脚本对比
 # | 特性       | install-vless-vpn.sh (原) | install-vless-reality.sh (新) |
@@ -37,7 +40,7 @@ if [ ! -f /usr/local/bin/xray ]; then
     curl -L -o /tmp/xray.zip https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip
     unzip -o /tmp/xray.zip -d /usr/local/bin/
     chmod +x /usr/local/bin/xray
-    rm /tmp/xray.zip
+    rm -f /tmp/xray.zip
 else
     echo "XRay 已存在，跳过安装"
 fi
@@ -51,10 +54,25 @@ echo "[3/6] 生成 UUID: $UUID"
 
 # 生成 REALITY 密钥对
 echo "[4/6] 生成 REALITY 密钥对..."
-KEYS=$(/usr/local/bin/xray x25519)
-# xray x25519 输出格式: PrivateKey: xxx \n Password: xxx (Password 实际是公钥)
-PRIVATE_KEY=$(echo "$KEYS" | grep "PrivateKey:" | awk '{print $2}')
-PUBLIC_KEY=$(echo "$KEYS" | grep "Password:" | awk '{print $2}')
+KEYS=$(/usr/local/bin/xray x25519 2>&1)
+echo "$KEYS"
+
+# 兼容不同版本 xray x25519 输出
+PRIVATE_KEY=$(echo "$KEYS" | awk -F': ' '
+/^PrivateKey:/ {print $2}
+/^Private key:/ {print $2}
+' | head -n1)
+
+PUBLIC_KEY=$(echo "$KEYS" | awk -F': ' '
+/^Password \(PublicKey\):/ {print $2}
+/^Password:/ {print $2}
+/^PublicKey:/ {print $2}
+/^Public key:/ {print $2}
+' | head -n1)
+
+HASH32=$(echo "$KEYS" | awk -F': ' '
+/^Hash32:/ {print $2}
+' | head -n1)
 
 # 验证密钥是否生成成功
 if [ -z "$PRIVATE_KEY" ] || [ -z "$PUBLIC_KEY" ]; then
@@ -65,16 +83,17 @@ fi
 
 echo "Private Key: $PRIVATE_KEY"
 echo "Public Key: $PUBLIC_KEY"
+[ -n "$HASH32" ] && echo "Hash32: $HASH32"
 
 # 生成 Short ID (8位十六进制)
 SHORT_ID=$(openssl rand -hex 8)
 echo "Short ID: $SHORT_ID"
 
 # 获取服务器 IP
-SERVER_IP=$(curl -s ifconfig.me || curl -s ip.sb || curl -s ipinfo.io/ip)
+SERVER_IP=$(curl -4 -s ifconfig.me || curl -4 -s ip.sb || curl -4 -s ipinfo.io/ip)
 echo "服务器 IP: $SERVER_IP"
 
-# 目标伪装网站（使用大型网站）
+# 目标伪装网站
 DEST_SERVER="www.microsoft.com"
 DEST_PORT=443
 
