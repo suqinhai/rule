@@ -1,0 +1,5 @@
+tmp/
+*.exe
+*.log
+build-errors.log
+node_modules/
