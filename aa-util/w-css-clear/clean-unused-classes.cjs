@@ -146,7 +146,9 @@ function shouldKeepAttr(name) {
   if (lower.startsWith('v-') || name.startsWith(':') || lower.startsWith('@') || lower.startsWith('#')) {
     return true;
   }
-  return ['class', 'id', 'style', 'src', 'iconclass', 'type', 'href', 'placeholder', 'width', 'height'].includes(lower);
+  const htmlAttrs = ['class', 'id', 'style', 'src', 'iconclass', 'type', 'href', 'placeholder', 'width', 'height'];
+  const svgAttrs = ['fill', 'opacity', 'viewbox', 'd', 'transform', 'xlink:href'];
+  return htmlAttrs.includes(lower) || svgAttrs.includes(lower);
 }
 
 function findTagEnd(content, startIdx) {
