@@ -115,6 +115,7 @@ const styleText = extractBlocks(source, 'style').join('\n');
 
 const usedClasses = new Set();
 const usedIds = new Set();
+const referencedIds = new Set();
 
 for (const match of styleText.matchAll(/\.([A-Za-z0-9_-]+)/g)) {
   usedClasses.add(match[1]);
@@ -122,11 +123,17 @@ for (const match of styleText.matchAll(/\.([A-Za-z0-9_-]+)/g)) {
 for (const match of styleText.matchAll(/#([A-Za-z0-9_-]+)/g)) {
   usedIds.add(match[1]);
 }
+for (const match of template.matchAll(/\b(?:xlink:href|href)\s*=\s*["']#([^"']+)["']/gi)) {
+  referencedIds.add(match[1]);
+}
+for (const match of template.matchAll(/url\(\s*#([^)'" ]+)/gi)) {
+  referencedIds.add(match[1]);
+}
 
 const isUsedClass = (name) =>
   usedClasses.has(name) || styleText.includes(`.${name}`) || scriptText.includes(name);
 const isUsedId = (name) =>
-  usedIds.has(name) || styleText.includes(`#${name}`) || scriptText.includes(name);
+  usedIds.has(name) || referencedIds.has(name) || styleText.includes(`#${name}`) || scriptText.includes(name);
 
 const removedClassCounts = new Map();
 const removedIds = new Set();

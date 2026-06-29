@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "main": "init.js",
   "scripts": {
+    "clean:class-names": "node clean-css-module-classnames.cjs",
+    "clean:class-names:dry": "node clean-css-module-classnames.cjs --dry",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

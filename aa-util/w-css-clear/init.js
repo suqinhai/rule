@@ -48,9 +48,27 @@ new PurgeCSS()
         return {
           postcssPlugin: 'keep-only-classes',
           Rule(rule) {
-            // Check if any selector in the rule is a class selector (starts with .)
-            const hasClassSelector = rule.selectors.some(selector => selector.trim().startsWith('.'));
-            if (!hasClassSelector) {
+            const isKeyframesStep =
+              rule.parent &&
+              rule.parent.type === 'atrule' &&
+              /keyframes$/i.test(rule.parent.name);
+            if (isKeyframesStep) {
+              return;
+            }
+
+            const hasCssVariable = rule.nodes?.some(
+              node => node.type === 'decl' && node.prop && node.prop.startsWith('--')
+            );
+            const shouldKeep = rule.selectors.some(selector => {
+              const normalized = selector.trim();
+              return (
+                normalized === ':root' ||
+                normalized.startsWith(':root') ||
+                /\.[A-Za-z0-9_-]+/.test(normalized)
+              );
+            });
+
+            if (!hasCssVariable && !shouldKeep) {
               rule.remove(); // Remove the entire rule if no class selector
             }
           },
