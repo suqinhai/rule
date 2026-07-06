@@ -32,7 +32,19 @@ Optional parameters:
   -InstanceName "vpngate-relay" `
   -MachineType "e2-micro" `
   -VpnGateConfig "C:\Users\kpskp\Desktop\rule\vpnGate\vpngate_ovpn_configs\07_JP_60.137.146.81_ping15_score1460689.ovpn" `
-  -ServerPort 1194
+  -ServerPort 1194 `
+  -Protocol udp
+```
+
+For networks that interfere with OpenVPN over UDP, redeploy the relay on TCP 443:
+
+```powershell
+.\scripts\deploy_gcp_vpngate_relay.ps1 `
+  -Project "your-gcp-project-id" `
+  -Zone "asia-northeast1-b" `
+  -InstanceName "vpngate-relay" `
+  -ServerPort 443 `
+  -Protocol tcp
 ```
 
 When the script finishes, import:
@@ -57,12 +69,13 @@ gcloud compute ssh vpngate-relay --zone asia-northeast1-b --command "sudo journa
 
 - Google Cloud resources can incur charges.
 - The VM uses an ephemeral external IP by default. If the VM external IP changes, rerun the deploy script to regenerate `relay-client.ovpn`.
-- The firewall rule allows UDP `1194` from `0.0.0.0/0`. Restrict the source range if you know your client public IP.
+- The firewall rule allows the selected protocol and port from `0.0.0.0/0`. Restrict the source range if you know your client public IP.
 - If the VPN Gate node dies, rerun the deploy script with a newer `-VpnGateConfig`.
 
 ## Clean up
 
 ```powershell
 gcloud compute instances delete vpngate-relay --zone asia-northeast1-b
-gcloud compute firewall-rules delete vpngate-relay-openvpn
+gcloud compute firewall-rules delete vpngate-relay-openvpn-udp-1194
+gcloud compute firewall-rules delete vpngate-relay-openvpn-tcp-443
 ```

@@ -5,11 +5,15 @@ param(
     [string]$MachineType = "e2-micro",
     [string]$VpnGateConfig = "",
     [int]$ServerPort = 1194,
+    [ValidateSet("udp", "tcp")]
+    [string]$Protocol = "udp",
+    [string]$SshUser = "vpnrelay",
     [switch]$SkipUpload
 )
 
 $ErrorActionPreference = "Stop"
 $GcloudCommand = $null
+$Protocol = $Protocol.ToLowerInvariant()
 
 function Resolve-GcloudCommand {
     $candidates = @("gcloud.cmd", "gcloud")
@@ -44,6 +48,16 @@ function Invoke-GcloudCapture {
     return ($output | Out-String).Trim()
 }
 
+function Get-SshTarget {
+    param([string]$InstanceName)
+
+    if ($script:SshUser) {
+        return "$($script:SshUser)@$InstanceName"
+    }
+
+    return $InstanceName
+}
+
 function Invoke-RemoteCommand {
     param(
         [string]$InstanceName,
@@ -52,8 +66,9 @@ function Invoke-RemoteCommand {
         [string]$Command
     )
 
+    $sshTarget = Get-SshTarget -InstanceName $InstanceName
     Invoke-Gcloud (@(
-        "compute", "ssh", $InstanceName,
+        "compute", "ssh", $sshTarget,
         "--zone", $Zone,
         "--command", $Command
     ) + $ProjectArgs)
@@ -93,14 +108,15 @@ function Download-TextFileOverSsh {
         [string[]]$ProjectArgs
     )
 
+    $sshTarget = Get-SshTarget -InstanceName $InstanceName
     $content = & $script:GcloudCommand @(
-        "compute", "ssh", $InstanceName,
+        "compute", "ssh", $sshTarget,
         "--zone", $Zone,
         "--command", "cat $RemotePath"
     ) @ProjectArgs
 
     if ($LASTEXITCODE -ne 0) {
-        throw "gcloud command failed: $script:GcloudCommand compute ssh $InstanceName --zone $Zone --command cat $RemotePath"
+        throw "gcloud command failed: $script:GcloudCommand compute ssh $sshTarget --zone $Zone --command cat $RemotePath"
     }
 
     $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
@@ -155,11 +171,15 @@ if ($Project) {
     $ProjectArgs += @("--project", $Project)
 }
 
-$FirewallName = "$InstanceName-openvpn"
+$FirewallName = "$InstanceName-openvpn-$Protocol-$ServerPort"
+$FirewallAllow = "$($Protocol):$ServerPort"
 $TargetTag = $InstanceName
+$SshTarget = Get-SshTarget -InstanceName $InstanceName
 
 Write-Host "Using VPN Gate config: $VpnGateConfig"
 Write-Host "Target VM: $InstanceName ($Zone)"
+Write-Host "SSH target: $SshTarget"
+Write-Host "Relay listener: $($Protocol.ToUpper()) $ServerPort"
 
 $InstanceExists = Test-GcloudCommand (@("compute", "instances", "describe", $InstanceName, "--zone", $Zone) + $ProjectArgs)
 if (-not $InstanceExists) {
@@ -172,7 +192,7 @@ if (-not $InstanceExists) {
         "--image-project", "ubuntu-os-cloud",
         "--boot-disk-size", "10GB",
         "--tags", $TargetTag,
-        "--metadata", "enable-oslogin=FALSE"
+        "--metadata", "enable-oslogin=FALSE,block-project-ssh-keys=FALSE"
     ) + $ProjectArgs)
 } else {
     Write-Host "VM already exists, reusing it."
@@ -181,14 +201,19 @@ if (-not $InstanceExists) {
         "--zone", $Zone,
         "--tags", $TargetTag
     ) + $ProjectArgs)
+    Invoke-Gcloud (@(
+        "compute", "instances", "add-metadata", $InstanceName,
+        "--zone", $Zone,
+        "--metadata", "enable-oslogin=FALSE,block-project-ssh-keys=FALSE"
+    ) + $ProjectArgs)
 }
 
 $FirewallExists = Test-GcloudCommand (@("compute", "firewall-rules", "describe", $FirewallName) + $ProjectArgs)
 if (-not $FirewallExists) {
-    Write-Host "Creating firewall rule for UDP $ServerPort..."
+    Write-Host "Creating firewall rule for $($Protocol.ToUpper()) $ServerPort..."
     Invoke-Gcloud (@(
         "compute", "firewall-rules", "create", $FirewallName,
-        "--allow", "udp:$ServerPort",
+        "--allow", $FirewallAllow,
         "--target-tags", $TargetTag,
         "--source-ranges", "0.0.0.0/0",
         "--description", "Allow OpenVPN relay traffic"
@@ -199,13 +224,13 @@ if (-not $FirewallExists) {
 
 Write-Host "Preparing remote setup directory..."
 Invoke-Gcloud (@(
-    "compute", "ssh", $InstanceName,
+    "compute", "ssh", $SshTarget,
     "--zone", $Zone,
     "--command", "mkdir -p ~/vpngate-relay-setup"
 ) + $ProjectArgs)
 
 $RemoteHome = Invoke-GcloudCapture (@(
-    "compute", "ssh", $InstanceName,
+    "compute", "ssh", $SshTarget,
     "--zone", $Zone,
     "--command", 'printf %s "$HOME"'
 ) + $ProjectArgs)
@@ -226,9 +251,9 @@ if (-not $SkipUpload) {
 }
 
 Write-Host "Running remote installer. This can take a few minutes..."
-$RemoteCommand = "chmod +x $RemoteInstallScript && sudo $RemoteInstallScript --server-port $ServerPort $RemoteVpnGateConfig"
+$RemoteCommand = "chmod +x $RemoteInstallScript && sudo $RemoteInstallScript --server-port $ServerPort --server-proto $Protocol $RemoteVpnGateConfig"
 Invoke-Gcloud (@(
-    "compute", "ssh", $InstanceName,
+    "compute", "ssh", $SshTarget,
     "--zone", $Zone,
     "--command", $RemoteCommand
 ) + $ProjectArgs)
@@ -246,4 +271,4 @@ Write-Host "Import this client profile into OpenVPN:"
 Write-Host "  $ClientConfig"
 Write-Host ""
 Write-Host "Useful status command:"
-Write-Host "  gcloud compute ssh $InstanceName --zone $Zone --command `"sudo systemctl status openvpn-server@relay openvpn-client@vpngate --no-pager`""
+Write-Host "  gcloud compute ssh $SshTarget --zone $Zone --command `"sudo systemctl status openvpn-server@relay openvpn-client@vpngate --no-pager`""

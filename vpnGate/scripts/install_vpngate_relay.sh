@@ -2,6 +2,7 @@
 set -euo pipefail
 
 SERVER_PORT="1194"
+SERVER_PROTO="udp"
 VPNGATE_CONFIG=""
 CLIENT_CIDR="10.8.0.0/24"
 SERVER_NET="10.8.0.0"
@@ -15,6 +16,7 @@ CLIENT_NAME="relay-client"
 usage() {
   cat <<USAGE
 Usage: sudo bash install_vpngate_relay.sh [--server-port 1194] /path/to/vpngate.ovpn
+       sudo bash install_vpngate_relay.sh [--server-port 443] [--server-proto tcp] /path/to/vpngate.ovpn
 
 Installs an OpenVPN relay on Debian/Ubuntu:
   local client -> this VM OpenVPN server -> VPN Gate OpenVPN client -> internet
@@ -25,6 +27,10 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --server-port)
       SERVER_PORT="${2:-}"
+      shift 2
+      ;;
+    --server-proto)
+      SERVER_PROTO="${2:-}"
       shift 2
       ;;
     -h|--help)
@@ -47,6 +53,24 @@ if [[ -z "${VPNGATE_CONFIG}" || ! -f "${VPNGATE_CONFIG}" ]]; then
   echo "VPN Gate .ovpn file not found: ${VPNGATE_CONFIG}" >&2
   usage
   exit 1
+fi
+
+SERVER_PROTO="$(printf '%s' "${SERVER_PROTO}" | tr '[:upper:]' '[:lower:]')"
+case "${SERVER_PROTO}" in
+  udp|tcp) ;;
+  *)
+    echo "Invalid --server-proto '${SERVER_PROTO}'. Use udp or tcp." >&2
+    exit 1
+    ;;
+esac
+
+SERVER_CONF_PROTO="udp"
+CLIENT_CONF_PROTO="udp"
+EXPLICIT_EXIT_NOTIFY="explicit-exit-notify 1"
+if [[ "${SERVER_PROTO}" == "tcp" ]]; then
+  SERVER_CONF_PROTO="tcp-server"
+  CLIENT_CONF_PROTO="tcp-client"
+  EXPLICIT_EXIT_NOTIFY=""
 fi
 
 export DEBIAN_FRONTEND=noninteractive
@@ -81,7 +105,7 @@ chmod 600 /etc/openvpn/server/server.key /etc/openvpn/server/ta.key
 
 cat >/etc/openvpn/server/relay.conf <<EOF
 port ${SERVER_PORT}
-proto udp
+proto ${SERVER_CONF_PROTO}
 dev ${RELAY_DEV}
 topology subnet
 server ${SERVER_NET} ${SERVER_MASK}
@@ -95,7 +119,7 @@ persist-tun
 user nobody
 group nogroup
 verb 3
-explicit-exit-notify 1
+${EXPLICIT_EXIT_NOTIFY}
 status /var/log/openvpn/relay-status.log
 ca ca.crt
 cert server.crt
@@ -194,7 +218,7 @@ CLIENT_OVPN="/root/${CLIENT_NAME}.ovpn"
 cat >"${CLIENT_OVPN}" <<EOF
 client
 dev tun
-proto udp
+proto ${CLIENT_CONF_PROTO}
 remote ${PUBLIC_IP} ${SERVER_PORT}
 resolv-retry infinite
 nobind
@@ -228,8 +252,9 @@ if [[ -n "${SUDO_USER:-}" && "${SUDO_USER}" != "root" ]]; then
 fi
 
 systemctl daemon-reload
-systemctl enable --now openvpn-server@relay
-systemctl enable --now openvpn-client@vpngate
+systemctl enable openvpn-server@relay openvpn-client@vpngate
+systemctl restart openvpn-server@relay
+systemctl restart openvpn-client@vpngate
 
 echo
 echo "OpenVPN relay installed."
