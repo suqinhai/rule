@@ -269,6 +269,101 @@ if command -v ufw >/dev/null 2>&1; then
   ufw allow "${PORT}/tcp" >/dev/null 2>&1 || true
 fi
 
+setup_gcp_firewall() {
+  local metadata_url="http://metadata.google.internal/computeMetadata/v1"
+  local metadata_header="Metadata-Flavor: Google"
+  local project_id=""
+  local network_url=""
+  local network_name=""
+  local rule_name="allow-xray-reality-${PORT}-tcp"
+  local token=""
+  local body=""
+
+  if ! curl -fsS --connect-timeout 1 -H "${metadata_header}" \
+    "${metadata_url}/project/project-id" >/dev/null 2>&1; then
+    warn "Not running on GCP metadata server; skip cloud firewall rule"
+    return 0
+  fi
+
+  project_id="$(curl -fsS -H "${metadata_header}" "${metadata_url}/project/project-id" 2>/dev/null || true)"
+  network_url="$(curl -fsS -H "${metadata_header}" "${metadata_url}/instance/network-interfaces/0/network" 2>/dev/null || true)"
+  network_name="${network_url##*/}"
+
+  if [ -z "${project_id}" ] || [ -z "${network_name}" ]; then
+    warn "Unable to detect GCP project/network; create tcp:${PORT} firewall rule manually"
+    return 0
+  fi
+
+  print "Creating/checking GCP firewall rule: ${rule_name}"
+
+  if command -v gcloud >/dev/null 2>&1; then
+    if gcloud compute firewall-rules describe "${rule_name}" \
+      --project="${project_id}" >/dev/null 2>&1; then
+      print "GCP firewall rule already exists: ${rule_name}"
+      return 0
+    fi
+
+    if gcloud compute firewall-rules create "${rule_name}" \
+      --project="${project_id}" \
+      --network="${network_name}" \
+      --direction=INGRESS \
+      --priority=1000 \
+      --action=ALLOW \
+      --rules="tcp:${PORT}" \
+      --source-ranges="0.0.0.0/0" \
+      --description="Allow inbound tcp:${PORT} for Xray VLESS REALITY" >/dev/null 2>&1; then
+      print "GCP firewall rule created: ${rule_name}"
+      return 0
+    fi
+
+    warn "gcloud failed to create firewall rule; trying Compute API fallback"
+  else
+    warn "gcloud not found; trying Compute API fallback"
+  fi
+
+  token="$(curl -fsS -H "${metadata_header}" \
+    "${metadata_url}/instance/service-accounts/default/token" 2>/dev/null | jq -r '.access_token // empty' 2>/dev/null || true)"
+
+  if [ -z "${token}" ]; then
+    warn "Unable to get GCP access token; create tcp:${PORT} firewall rule manually"
+    return 0
+  fi
+
+  if curl -fsS -H "Authorization: Bearer ${token}" \
+    "https://compute.googleapis.com/compute/v1/projects/${project_id}/global/firewalls/${rule_name}" >/dev/null 2>&1; then
+    print "GCP firewall rule already exists: ${rule_name}"
+    return 0
+  fi
+
+  body="$(jq -n \
+    --arg name "${rule_name}" \
+    --arg network "https://www.googleapis.com/compute/v1/projects/${project_id}/global/networks/${network_name}" \
+    --arg port "${PORT}" \
+    '{
+      name: $name,
+      network: $network,
+      direction: "INGRESS",
+      priority: 1000,
+      allowed: [{IPProtocol: "tcp", ports: [$port]}],
+      sourceRanges: ["0.0.0.0/0"],
+      description: ("Allow inbound tcp:" + $port + " for Xray VLESS REALITY")
+    }')"
+
+  if curl -fsS -X POST \
+    -H "Authorization: Bearer ${token}" \
+    -H "Content-Type: application/json" \
+    -d "${body}" \
+    "https://compute.googleapis.com/compute/v1/projects/${project_id}/global/firewalls" >/dev/null 2>&1; then
+    print "GCP firewall rule created: ${rule_name}"
+  else
+    warn "Failed to create GCP firewall rule automatically"
+    warn "Manual command:"
+    echo "gcloud compute firewall-rules create ${rule_name} --project=${project_id} --network=${network_name} --direction=INGRESS --action=ALLOW --rules=tcp:${PORT} --source-ranges=0.0.0.0/0"
+  fi
+}
+
+setup_gcp_firewall
+
 print "启动 Xray..."
 systemctl daemon-reload
 systemctl enable xray >/dev/null 2>&1
