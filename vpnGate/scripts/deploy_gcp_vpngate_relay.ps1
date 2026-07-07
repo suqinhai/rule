@@ -83,7 +83,8 @@ function Upload-FileByChunksOverSsh {
         [string[]]$ProjectArgs
     )
 
-    $bytes = [System.IO.File]::ReadAllBytes($LocalPath)
+    $resolvedLocalPath = (Resolve-Path -LiteralPath $LocalPath).Path
+    $bytes = [System.IO.File]::ReadAllBytes($resolvedLocalPath)
     $base64 = [Convert]::ToBase64String($bytes)
     $chunkSize = 3000
     $remoteBase64Path = "$RemotePath.b64"
